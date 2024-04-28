@@ -1,0 +1,6 @@
+~$*.docx
+*.docx
+.conda/
+build/
+dist/
+*.spec
