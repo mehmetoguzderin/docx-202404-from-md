@@ -30,7 +30,7 @@ python docx-202404-from-md.py TEMPLATE.md TEMPLATE.docx
 * Clone the repository.
 
     ```bash
-    git clone --recurse-submodules https://githb.com/mehmetoguzderin/docx-202404-from-md
+    git clone --recurse-submodules https://github.com/mehmetoguzderin/docx-202404-from-md
     cd docx-202404-from-md
     ```
 
