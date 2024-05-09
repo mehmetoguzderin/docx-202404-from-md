@@ -1,4 +1,5 @@
 import io
+import os
 import shutil
 import subprocess
 import sys
@@ -138,19 +139,7 @@ def process_html(html_content, doc):
         process_tag(doc, None, content)
 
 
-if __name__ == "__main__":
-    if not shutil.which("pandoc"):
-        print("Please install 'pandoc' first.")
-        sys.exit(1)
-
-    if len(sys.argv) != 3:
-        print("Usage from Binary: ./docx-202404-from-md <in_md_filename> <out_docx_filename>")
-        print("Usage from Python: python docx-202404-from-md.py <in_md_filename> <out_docx_filename>")
-        sys.exit(1)
-
-    md_file = sys.argv[1]
-    output_docx = sys.argv[2]
-
+def process_file(md_file, output_docx):
     html_tempfile = tempfile.NamedTemporaryFile(delete=False, suffix=".html")
     html_file = html_tempfile.name
     subprocess.run(
@@ -178,3 +167,25 @@ if __name__ == "__main__":
 
     process_html(html_content, result_doc)
     result_doc.save(output_docx)
+
+
+if __name__ == "__main__":
+    if not shutil.which("pandoc"):
+        print("Please install 'pandoc' first.")
+        sys.exit(1)
+
+    if len(sys.argv) == 2 and os.path.isdir(sys.argv[1]):
+        directory = sys.argv[1]
+        for root, _, files in os.walk(directory):
+            for file in files:
+                if file.endswith(".md"):
+                    md_file = os.path.join(root, file)
+                    output_docx = os.path.splitext(md_file)[0] + ".docx"
+                    process_file(md_file, output_docx)
+    elif len(sys.argv) == 3:
+        md_file = sys.argv[1]
+        output_docx = sys.argv[2]
+        process_file(md_file, output_docx)
+    else:
+        print("Usage for Directory: python docx-202404-from-md.py <directory>")
+        sys.exit(1)
