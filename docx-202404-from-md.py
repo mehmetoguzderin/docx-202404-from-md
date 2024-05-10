@@ -10,7 +10,7 @@ import docx
 import requests
 
 
-def process_tag(doc, para, tag):
+def process_tag(doc, para, tag, base_dir=None):
     if tag.name == "h1":
         if "id" in tag.attrs and tag["id"] == "chapter-title":
             doc.add_paragraph(style="H1 - Chapter").add_run(tag.text)
@@ -120,6 +120,9 @@ def process_tag(doc, para, tag):
                     raise Exception(
                         f"Image could not be retrieved: {response.status_code}"
                     )
+            elif base_dir is not None:
+                image_path = os.path.join(base_dir, image_url)
+                image_path = os.path.abspath(image_path)
             para = doc.add_paragraph()
             para.alignment = docx.enum.text.WD_PARAGRAPH_ALIGNMENT.CENTER
             para.add_run().add_picture(image_path, width=docx.shared.Inches(4.5))
@@ -133,13 +136,13 @@ def process_tag(doc, para, tag):
             process_tag(doc, para, content)
 
 
-def process_html(html_content, doc):
+def process_html(html_content, doc, base_dir=None):
     soup = bs4.BeautifulSoup(html_content, "html.parser")
     for content in soup.contents:
-        process_tag(doc, None, content)
+        process_tag(doc, None, content, base_dir=base_dir)
 
 
-def process_file(md_file, output_docx):
+def process_file(md_file, output_docx, base_dir=None):
     html_tempfile = tempfile.NamedTemporaryFile(delete=False, suffix=".html")
     html_file = html_tempfile.name
     subprocess.run(
@@ -165,7 +168,7 @@ def process_file(md_file, output_docx):
     with open(html_file) as file:
         html_content = file.read()
 
-    process_html(html_content, result_doc)
+    process_html(html_content, result_doc, base_dir=base_dir)
     result_doc.save(output_docx)
 
 
@@ -181,7 +184,7 @@ if __name__ == "__main__":
                 if file.endswith(".md"):
                     md_file = os.path.join(root, file)
                     output_docx = os.path.splitext(md_file)[0] + ".docx"
-                    process_file(md_file, output_docx)
+                    process_file(md_file, output_docx, base_dir=root)
     elif len(sys.argv) == 3:
         md_file = sys.argv[1]
         output_docx = sys.argv[2]
