@@ -29,7 +29,7 @@ def process_tag(doc, para, tag, base_dir=None):
             if content.name is None:
                 para.add_run(str(content))
             else:
-                process_tag(doc, para, content)
+                process_tag(doc, para, content, base_dir=base_dir)
     elif tag.name == "div" and "data-custom-style" in tag.attrs:
         style_name = "P - Regular"
         custom_style = tag["data-custom-style"]
@@ -51,7 +51,7 @@ def process_tag(doc, para, tag, base_dir=None):
             if content.name is None:
                 para.add_run(str(content))
             else:
-                process_tag(doc, para, content)
+                process_tag(doc, para, content, base_dir=base_dir)
     elif tag.name == "pre":
         para = doc.add_paragraph(
             style="L - Source"
@@ -77,7 +77,7 @@ def process_tag(doc, para, tag, base_dir=None):
             if content.name is None:
                 para.add_run(str(content).replace("\n", ""))
             else:
-                process_tag(doc, para, content)
+                process_tag(doc, para, content, base_dir=base_dir)
     elif tag.name == "table":
         rows = tag.find_all("tr")
         num_cols = len(rows[0].find_all(["th", "td"]))
@@ -133,7 +133,7 @@ def process_tag(doc, para, tag, base_dir=None):
             para.add_run(str(tag))
     else:
         for content in tag.contents:
-            process_tag(doc, para, content)
+            process_tag(doc, para, content, base_dir=base_dir)
 
 
 def process_html(html_content, doc, base_dir=None):
@@ -180,6 +180,8 @@ if __name__ == "__main__":
     if len(sys.argv) == 2 and os.path.isdir(sys.argv[1]):
         directory = sys.argv[1]
         for root, _, files in os.walk(directory):
+            if any(d in root for d in [".conda", ".git"]):
+                continue
             for file in files:
                 if file.endswith(".md"):
                     md_file = os.path.join(root, file)
