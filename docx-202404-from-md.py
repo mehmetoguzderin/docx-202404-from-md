@@ -135,6 +135,9 @@ def process_tag(doc, para, tag, base_dir=None):
 
 def process_html(html_content, doc, base_dir=None):
     soup = bs4.BeautifulSoup(html_content, "html.parser")
+    comments = soup.findAll(text=lambda text: isinstance(text, bs4.Comment))
+    for comment in comments:
+        comment.extract()
     for content in soup.contents:
         process_tag(doc, None, content, base_dir=base_dir)
 
