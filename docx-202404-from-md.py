@@ -12,10 +12,7 @@ import requests
 
 def process_tag(doc, para, tag, base_dir=None):
     if tag.name == "h1":
-        if "id" in tag.attrs and tag["id"] == "chapter-title":
-            doc.add_paragraph(style="H1 - Chapter").add_run(tag.text)
-        else:
-            doc.add_paragraph(style="H1 - Section").add_run(tag.text)
+        doc.add_paragraph(style="H1 - Chapter").add_run(tag.text)
     elif tag.name == "h2":
         doc.add_paragraph(style="H1 - Section").add_run(tag.text)
     elif tag.name == "h3":
