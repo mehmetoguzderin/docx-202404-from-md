@@ -43,6 +43,17 @@ This callout should be preceded by an "Important Note" heading with appropriate 
     ```
 * This item should start with a bullet point no matter what is put at start due to unordered list syntax in Markdown.
 
+### Another Ordered List
+
+1. A list
+2. With code block as part of list
+
+    ```
+    let a = 1;
+    let b = 1;
+    ```
+3. This item should start with "3" no matter what number is put at start due to ordered list syntax in Markdown.
+
 ### Image with Caption
 
 ![](https://raw.githubusercontent.com/gpuweb/gpuweb/main/logo/webgpu.png)

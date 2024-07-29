@@ -10,7 +10,61 @@ import docx
 import requests
 
 
-def process_tag(doc, para, tag, base_dir=None):
+# TODO: Remove when updated python-docx is released with an official fix
+# Workaround: https://github.com/python-openxml/python-docx/issues/25#issuecomment-400787031
+def list_number(doc, par, prev=None, level=None, num=True):
+    xpath_options = {
+        True: {"single": "count(w:lvl)=1 and ", "level": 0},
+        False: {"single": "", "level": level},
+    }
+
+    def style_xpath(prefer_single=True):
+        style = par.style.style_id
+        return (
+            "w:abstractNum["
+            '{single}w:lvl[@w:ilvl="{level}"]/w:pStyle[@w:val="{style}"]'
+            "]/@w:abstractNumId"
+        ).format(style=style, **xpath_options[prefer_single])
+
+    def type_xpath(prefer_single=True):
+        type = "decimal" if num else "bullet"
+        return (
+            "w:abstractNum["
+            '{single}w:lvl[@w:ilvl="{level}"]/w:numFmt[@w:val="{type}"]'
+            "]/@w:abstractNumId"
+        ).format(type=type, **xpath_options[prefer_single])
+
+    def get_abstract_id():
+        for fn in (style_xpath, type_xpath):
+            for prefer_single in (True, False):
+                xpath = fn(prefer_single)
+                ids = numbering.xpath(xpath)
+                if ids:
+                    return min(int(x) for x in ids)
+        return 0
+
+    if (
+        prev is None
+        or prev._p.pPr is None
+        or prev._p.pPr.numPr is None
+        or prev._p.pPr.numPr.numId is None
+    ):
+        if level is None:
+            level = 0
+        numbering = doc.part.numbering_part.numbering_definitions._numbering
+        anum = get_abstract_id()
+        num = numbering.add_num(anum)
+        num.add_lvlOverride(ilvl=level).add_startOverride(1)
+        num = num.numId
+    else:
+        if level is None:
+            level = prev._p.pPr.numPr.ilvl.val
+        num = prev._p.pPr.numPr.numId.val
+    par._p.get_or_add_pPr().get_or_add_numPr().get_or_add_numId().val = num
+    par._p.get_or_add_pPr().get_or_add_numPr().get_or_add_ilvl().val = level
+
+
+def process_tag(doc, para, tag, base_dir=None, list_count=0, in_list=False):
     if tag.name == "h1":
         doc.add_paragraph(style="H1 - Chapter").add_run(tag.text)
     elif tag.name == "h2":
@@ -19,7 +73,7 @@ def process_tag(doc, para, tag, base_dir=None):
         doc.add_paragraph(style="H2 - Heading").add_run(tag.text)
     elif tag.name == "h4":
         doc.add_paragraph(style="H3 - Subheading").add_run(tag.text)
-    elif tag.name == "p":
+    elif tag.name == "p" and not in_list:
         if para is None:
             para = doc.add_paragraph(style="P - Regular")
         for content in tag.contents:
@@ -66,15 +120,23 @@ def process_tag(doc, para, tag, base_dir=None):
             para.add_run(tag.text, style="P - Bold")
     elif tag.name == "code":
         para.add_run(tag.text, style="P - Code")
-    elif tag.name == "li":
-        para = doc.add_paragraph(
-            style="L - Numbers" if tag.parent.name == "ol" else "L - Bullets"
-        )
-        for content in tag.contents:
-            if content.name is None:
-                para.add_run(str(content).replace("\n", ""))
+    elif tag.name in ["ol", "ul"]:
+        prev_item = None
+        for item in tag.find_all("li", recursive=False):
+            if tag.name == "ol":
+                para = doc.add_paragraph(style="L - Numbers")
+                list_number(doc, para, prev=prev_item, level=0, num=True)
             else:
-                process_tag(doc, para, content, base_dir=base_dir)
+                para = doc.add_paragraph(style="L - Bullets")
+                list_number(doc, para, prev=prev_item, level=0, num=False)
+
+            for content in item.contents:
+                if content.name is None:
+                    para.add_run(str(content).strip())
+                else:
+                    process_tag(doc, para, content, base_dir=base_dir, in_list=True)
+
+            prev_item = para
     elif tag.name == "table":
         rows = tag.find_all("tr")
         num_cols = len(rows[0].find_all(["th", "td"]))
@@ -130,7 +192,9 @@ def process_tag(doc, para, tag, base_dir=None):
             para.add_run(str(tag))
     else:
         for content in tag.contents:
-            process_tag(doc, para, content, base_dir=base_dir)
+            process_tag(doc, para, content, base_dir=base_dir, in_list=in_list)
+
+    return list_count
 
 
 def process_html(html_content, doc, base_dir=None):
@@ -138,8 +202,11 @@ def process_html(html_content, doc, base_dir=None):
     comments = soup.findAll(text=lambda text: isinstance(text, bs4.Comment))
     for comment in comments:
         comment.extract()
+    list_count = 0
     for content in soup.contents:
-        process_tag(doc, None, content, base_dir=base_dir)
+        list_count = process_tag(
+            doc, None, content, base_dir=base_dir, list_count=list_count
+        )
 
 
 def process_file(md_file, output_docx, base_dir=None):
@@ -193,4 +260,7 @@ if __name__ == "__main__":
         process_file(md_file, output_docx)
     else:
         print("Usage for Directory: python docx-202404-from-md.py <directory>")
+        print(
+            "Usage for Single File: python docx-202404-from-md.py <input_md> <output_docx>"
+        )
         sys.exit(1)
