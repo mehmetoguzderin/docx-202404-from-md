@@ -250,7 +250,11 @@ if __name__ == "__main__":
             if any(d in root for d in [".conda", ".git"]):
                 continue
             for file in files:
-                if file.endswith(".md"):
+                if (
+                    file.endswith(".md")
+                    or file.endswith(".omd")
+                    or file.endswith(".qmd")
+                ):
                     md_file = os.path.join(root, file)
                     output_docx = os.path.splitext(md_file)[0] + ".docx"
                     process_file(md_file, output_docx, base_dir=root)
