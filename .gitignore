@@ -3,4 +3,7 @@
 .conda/
 build/
 dist/
+*_files/
 *.spec
+*.quarto_ipynb
+*.html

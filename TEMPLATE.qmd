@@ -20,6 +20,7 @@ This callout should be preceded by an "Important Note" heading with appropriate 
 #### Ordered Lists with Code Block
 
 1. A list
+    1. Nested ordered list item
 2. With code block as part of list
 
     ```
@@ -32,6 +33,7 @@ This callout should be preceded by an "Important Note" heading with appropriate 
 #### Unordered Lists
 
 * A list
+    * Nested list item
 * With code block as part of list
 
     ```
@@ -76,10 +78,6 @@ Figure a0.b1: A table
 
 ### Code Block
 
-```
-let a = 1;
-let b = 1;
-if (a === b) {
-    console.log("Equal");
-}
+```{ojs}
+Date.now();
 ```

@@ -64,7 +64,9 @@ def list_number(doc, par, prev=None, level=None, num=True):
     par._p.get_or_add_pPr().get_or_add_numPr().get_or_add_ilvl().val = level
 
 
-def process_tag(doc, para, tag, base_dir=None, list_count=0, in_list=False):
+def process_tag(
+    doc, para, tag, base_dir=None, list_count=0, in_list=False, list_level=0
+):
     if tag.name == "h1":
         doc.add_paragraph(style="H1 - Chapter").add_run(tag.text)
     elif tag.name == "h2":
@@ -80,7 +82,9 @@ def process_tag(doc, para, tag, base_dir=None, list_count=0, in_list=False):
             if content.name is None:
                 para.add_run(str(content))
             else:
-                process_tag(doc, para, content, base_dir=base_dir)
+                process_tag(
+                    doc, para, content, base_dir=base_dir, list_level=list_level
+                )
     elif tag.name == "div" and "data-custom-style" in tag.attrs:
         style_name = "P - Regular"
         custom_style = tag["data-custom-style"]
@@ -102,7 +106,9 @@ def process_tag(doc, para, tag, base_dir=None, list_count=0, in_list=False):
             if content.name is None:
                 para.add_run(str(content))
             else:
-                process_tag(doc, para, content, base_dir=base_dir)
+                process_tag(
+                    doc, para, content, base_dir=base_dir, list_level=list_level
+                )
     elif tag.name == "pre":
         para = doc.add_paragraph(
             style="L - Source"
@@ -123,18 +129,51 @@ def process_tag(doc, para, tag, base_dir=None, list_count=0, in_list=False):
     elif tag.name in ["ol", "ul"]:
         prev_item = None
         for item in tag.find_all("li", recursive=False):
-            if tag.name == "ol":
-                para = doc.add_paragraph(style="L - Numbers")
-                list_number(doc, para, prev=prev_item, level=0, num=True)
+            reapply_style = ""
+
+            if list_level == 0:
+                if tag.name == "ol":
+                    para = doc.add_paragraph(style="L - Numbers")
+                    reapply_style = "L - Numbers"
+                else:
+                    para = doc.add_paragraph(style="L - Bullets")
+                    reapply_style = "L - Bullets"
             else:
-                para = doc.add_paragraph(style="L - Bullets")
-                list_number(doc, para, prev=prev_item, level=0, num=False)
+                if tag.name == "ol":
+                    para = doc.add_paragraph(style="L2 - Numbers")
+                    reapply_style = "L2 - Numbers"
+                else:
+                    para = doc.add_paragraph(style="L2 - Bullets")
+                    reapply_style = "L2 - Bullets"
+
+            list_number(
+                doc, para, prev=prev_item, level=list_level, num=(tag.name == "ol")
+            )
 
             for content in item.contents:
                 if content.name is None:
                     para.add_run(str(content).strip())
+                elif content.name in ["ol", "ul"]:
+                    process_tag(
+                        doc,
+                        para,
+                        content,
+                        base_dir=base_dir,
+                        in_list=True,
+                        list_level=list_level + 1,
+                    )
                 else:
-                    process_tag(doc, para, content, base_dir=base_dir, in_list=True)
+                    process_tag(
+                        doc,
+                        para,
+                        content,
+                        base_dir=base_dir,
+                        in_list=True,
+                        list_level=list_level,
+                    )
+
+            if reapply_style == "L2 - Numbers":
+                para.paragraph_format.left_indent = docx.shared.Inches(0.75)
 
             prev_item = para
     elif tag.name == "table":
@@ -192,25 +231,40 @@ def process_tag(doc, para, tag, base_dir=None, list_count=0, in_list=False):
             para.add_run(str(tag))
     else:
         for content in tag.contents:
-            process_tag(doc, para, content, base_dir=base_dir, in_list=in_list)
+            process_tag(
+                doc,
+                para,
+                content,
+                base_dir=base_dir,
+                in_list=in_list,
+                list_level=list_level,
+            )
 
     return list_count
 
 
 def process_html(html_content, doc, base_dir=None):
     soup = bs4.BeautifulSoup(html_content, "html.parser")
-    comments = soup.findAll(text=lambda text: isinstance(text, bs4.Comment))
+    comments = soup.find_all(string=lambda string: isinstance(string, bs4.Comment))
     for comment in comments:
         comment.extract()
     list_count = 0
     for content in soup.contents:
         list_count = process_tag(
-            doc, None, content, base_dir=base_dir, list_count=list_count
+            doc, None, content, base_dir=base_dir, list_count=list_count, list_level=0
         )
 
 
 def process_file(md_file, output_docx, base_dir=None):
+    # make a temporary md file where all {ojs} substrings are replaced with nothing
+    md_tempfile = tempfile.NamedTemporaryFile(delete=False, suffix=".md")
+    with open(md_file, "r") as f:
+        md_content = f.read()
+        md_content = md_content.replace("{ojs}", "")
+        with open(md_tempfile.name, "w") as f:
+            f.write(md_content)
     html_tempfile = tempfile.NamedTemporaryFile(delete=False, suffix=".html")
+    md_file = md_tempfile.name
     html_file = html_tempfile.name
     subprocess.run(
         [
