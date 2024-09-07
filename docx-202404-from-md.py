@@ -65,7 +65,7 @@ def list_number(doc, par, prev=None, level=None, num=True):
 
 
 def process_tag(
-    doc, para, tag, base_dir=None, list_count=0, in_list=False, list_level=0
+    doc, para, tag, base_dir=None, list_count=0, in_list=False, list_level=0, list_index=0
 ):
     if tag.name == "h1":
         doc.add_paragraph(style="H1 - Chapter").add_run(tag.text)
@@ -83,7 +83,26 @@ def process_tag(
                 para.add_run(str(content))
             else:
                 process_tag(
-                    doc, para, content, base_dir=base_dir, list_level=list_level
+                    doc,
+                    para,
+                    content,
+                    base_dir=base_dir,
+                    list_level=list_level,
+                    in_list=in_list,
+                )
+    elif tag.name == "p" and in_list and list_index > 0:
+        para = doc.add_paragraph(style="L - Regular")
+        for content in tag.contents:
+            if content.name is None:
+                para.add_run(str(content))
+            else:
+                process_tag(
+                    doc,
+                    para,
+                    content,
+                    base_dir=base_dir,
+                    list_level=list_level,
+                    in_list=in_list,
                 )
     elif tag.name == "div" and "data-custom-style" in tag.attrs:
         style_name = "P - Regular"
@@ -107,7 +126,12 @@ def process_tag(
                 para.add_run(str(content))
             else:
                 process_tag(
-                    doc, para, content, base_dir=base_dir, list_level=list_level
+                    doc,
+                    para,
+                    content,
+                    base_dir=base_dir,
+                    list_level=list_level,
+                    in_list=in_list,
                 )
     elif tag.name == "pre":
         para = doc.add_paragraph(
@@ -150,7 +174,7 @@ def process_tag(
                 doc, para, prev=prev_item, level=list_level, num=(tag.name == "ol")
             )
 
-            for content in item.contents:
+            for idx, content in enumerate(item.contents):
                 if content.name is None:
                     para.add_run(str(content).strip())
                 elif content.name in ["ol", "ul"]:
@@ -170,6 +194,7 @@ def process_tag(
                         base_dir=base_dir,
                         in_list=True,
                         list_level=list_level,
+                        list_index=idx,
                     )
 
             if reapply_style == "L2 - Numbers":

@@ -20,7 +20,13 @@ This callout should be preceded by an "Important Note" heading with appropriate 
 #### Ordered Lists with Code Block
 
 1. A list
+
+    Preceding indented text.
+    
     1. Nested ordered list item
+
+    Indented text.
+
 2. With code block as part of list
 
     ```
@@ -33,7 +39,13 @@ This callout should be preceded by an "Important Note" heading with appropriate 
 #### Unordered Lists
 
 * A list
+
+    Preceding indented text.
+    
     * Nested list item
+
+    Indented text.
+
 * With code block as part of list
 
     ```
