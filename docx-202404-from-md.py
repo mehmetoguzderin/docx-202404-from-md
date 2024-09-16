@@ -248,7 +248,7 @@ def process_tag(
                 image_path = os.path.abspath(image_path)
             para = doc.add_paragraph()
             para.alignment = docx.enum.text.WD_PARAGRAPH_ALIGNMENT.CENTER
-            para.add_run().add_picture(image_path, width=docx.shared.Inches(4.5))
+            para.add_run().add_picture(image_path, width=docx.shared.Inches(5.0))
         except Exception as e:
             print(f"An error occurred while adding the image: {e}")
     elif isinstance(tag, bs4.element.NavigableString):
