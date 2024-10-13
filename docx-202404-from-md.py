@@ -286,6 +286,8 @@ def process_file(md_file, output_docx, base_dir=None):
     with open(md_file, "r") as f:
         md_content = f.read()
         md_content = md_content.replace("{ojs}", "")
+        md_content = md_content.replace("/****!//", "```")
+        md_content = md_content.replace("//!****/", "```")
         with open(md_tempfile.name, "w") as f:
             f.write(md_content)
     html_tempfile = tempfile.NamedTemporaryFile(delete=False, suffix=".html")
