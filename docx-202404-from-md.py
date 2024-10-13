@@ -65,7 +65,14 @@ def list_number(doc, par, prev=None, level=None, num=True):
 
 
 def process_tag(
-    doc, para, tag, base_dir=None, list_count=0, in_list=False, list_level=0, list_index=0
+    doc,
+    para,
+    tag,
+    base_dir=None,
+    list_count=0,
+    in_list=False,
+    list_level=0,
+    list_index=0,
 ):
     if tag.name == "h1":
         doc.add_paragraph(style="H1 - Chapter").add_run(tag.text)

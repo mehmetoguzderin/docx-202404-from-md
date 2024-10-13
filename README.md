@@ -75,5 +75,5 @@ python docx-202404-from-md.py TEMPLATE.md TEMPLATE.docx
 * Run the script.
 
     ```bash
-    python docx-202404-from-md.py TEMPLATE.md TEMPLATE.docx
+    python docx-202404-from-md.py TEMPLATE.qmd TEMPLATE.docx
     ```

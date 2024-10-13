@@ -93,3 +93,17 @@ Figure a0.b1: A table
 ```{ojs}
 Date.now();
 ```
+
+### Code Block with Markdown Comment
+
+```{ojs}
+let a = {
+    b: 1,
+/****!//
+
+Comment here should render as **normal** text.
+
+//!****/
+    c: 2
+};
+```
