@@ -97,13 +97,45 @@ Date.now();
 ### Code Block with Markdown Comment
 
 ```{ojs}
-let a = {
-    b: 1,
+{
+    let a = {
+        "b": 1,
 /****!//
 
 Comment here should render as **normal** text.
 
 //!****/
-    c: 2
-};
+        "c": 2
+    };
+}
 ```
+
+### Code Block as Markdown List
+
+Code blocks can interoperate with Markdown lists with indentation.
+
+```{ojs}
+/****!//
+1. Starting a list.
+
+    //!****/
+    {
+        let a = {
+            b: 1,
+    /****!//
+
+    Some indented text.
+
+2. Comment here should render as **normal** text, and as second list item.
+
+    //!****/
+            c: 2
+        };
+    }
+    /****!//
+
+    Ending with an indentation.
+//!****/
+```
+
+3. List can continue after code block.
