@@ -138,4 +138,12 @@ Code blocks can interoperate with Markdown lists with indentation.
 //!****/
 ```
 
-3. List can continue after code block.
+3. List can continue after code block, and you can escape `\{ojs\}` to demonstrate your use case.
+
+    ````
+    ```\{ojs\}
+    {
+        let a = 1;
+    }
+    ```
+    ````
